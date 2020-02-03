@@ -22,9 +22,9 @@ def Analyze(input):
     combinePlots(seriesList, input, matrixSize)
 
 def combinePlots(seriesList, input, matrixSize):
-    xjaws = np.ndarray([matrixSize, matrixSize])
-    yjaws = np.ndarray([matrixSize, matrixSize])
-    rotjaws = np.ndarray([matrixSize, matrixSize])
+    xjaws = np.ndarray([matrixSize,matrixSize])
+    yjaws = np.ndarray([matrixSize,matrixSize])
+    rotjaws = np.ndarray([matrixSize,matrixSize])
     for name in input:
         ds = pydicom.read_file(name)
         if ds[0x0020,0x0011].value == np.asarray(seriesList).min():
@@ -41,12 +41,15 @@ def combinePlots(seriesList, input, matrixSize):
 
 
 def plotPlots(a, b, c):
+    a8bit = rescale(a)
+    b8bit = rescale(b)
+    c8bit = rescale(c)
     fig, axs = plt.subplots(1, 3)
-    axs[0].imshow(a)
+    axs[0].imshow(a8bit)
     axs[0].set_title('X-Jaws')
-    axs[1].imshow(b)
+    axs[1].imshow(b8bit)
     axs[1].set_title('Y-Jaws')
-    axs[2].imshow(c)
+    axs[2].imshow(c8bit)
     axs[2].set_title('Rotation')
     plt.show()
 
