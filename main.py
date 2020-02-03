@@ -59,11 +59,11 @@ def rescale(input):
     x0 = input.min()
     x1 = input.max()
     y0 = 0
-    y1 = 255.0
+    y1 = 255
     i8 = ((input - x0) * ((y1 - y0) / (x1 - x0))) + y0
     # create new array with rescaled values and unsigned 8 bit data type
     o8 = i8.astype(np.uint8)
-    return -o8
+    return o8
 
 
 dicomList = []
