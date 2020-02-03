@@ -1,12 +1,9 @@
 import argparse
 import os
-import pydicom
-import cv2
 import numpy as np
-from tqdm import tqdm
+import pydicom
 import matplotlib.pyplot as plt
-from skimage.morphology import disk
-from skimage.morphology import black_tophat
+
 
 
 def loadDicom(input):
@@ -14,26 +11,44 @@ def loadDicom(input):
         for filename in fileList:
             if ".dcm" in filename.lower():  # check whether the file's DICOM
                 dicomList.append(os.path.join(dirName,filename))
+        Analyze(dicomList)
+
 
 def Analyze(input):
-    # perhaps we want to first normalize the image so the maximum pixel is 255, and minimum is 0
-    img = pydicom.dcmread(input)
-    normalizedImg = rescale(img.pixel_array)
-    normalizedImgO = normalizedImg.copy()
-    normalizedImg = (black_tophat(normalizedImg, disk(12)))
-    normalizedImg = cv2.GaussianBlur(normalizedImg, (5, 5), 3)
-    # apply hough transform
-    circles = cv2.HoughCircles(normalizedImg, cv2.HOUGH_GRADIENT, 1, 100, param1=100, param2=10, minRadius=3, maxRadius=6)
-    # place circles and cente rectangle on image
-    if circles is not None:
-        # Convert the circle parameters a, b and r to integers.
-        circles = np.uint16(np.around(circles))
-        for pt in tqdm(circles[0, :]):
-            a, b, r = pt[0], pt[1], pt[2]
-            # Draw the circumference of the circle.
-            cv2.circle(normalizedImgO, (a, b), r, (0, 0, 0), 2)
-    print(circles)
-    return normalizedImgO
+    for x in input:
+        ds = pydicom.read_file(x)
+        matrixSize = ds[0x0028,0x0010].value
+        seriesList.append(ds[0x0020,0x0011].value)
+    combinePlots(seriesList, input, matrixSize)
+
+def combinePlots(seriesList, input, matrixSize):
+    xjaws = np.ndarray([matrixSize, matrixSize])
+    yjaws = np.ndarray([matrixSize, matrixSize])
+    rotjaws = np.ndarray([matrixSize, matrixSize])
+    for name in input:
+        ds = pydicom.read_file(name)
+        if ds[0x0020,0x0011].value == np.asarray(seriesList).min():
+            # print("X-Jaws is ", y)
+            xjaws += ds.pixel_array
+        elif ds[0x0020,0x0011].value == np.asarray(seriesList).max():
+            # print("Y-Jaws is ", y)
+            yjaws += ds.pixel_array
+        else:
+            # print("Rotation Jaw is ", y)
+            rotjaws += ds.pixel_array
+
+    plotPlots(xjaws, yjaws, rotjaws)
+
+
+def plotPlots(a, b, c):
+    fig, axs = plt.subplots(1, 3)
+    axs[0].imshow(a)
+    axs[0].set_title('X-Jaws')
+    axs[1].imshow(b)
+    axs[1].set_title('Y-Jaws')
+    axs[2].imshow(c)
+    axs[2].set_title('Rotation')
+    plt.show()
 
 
 def rescale(input):
@@ -47,12 +62,10 @@ def rescale(input):
     o8 = i8.astype(np.uint8)
     return -o8
 
-dicomList = []
 
+dicomList = []
+seriesList = []
 parser = argparse.ArgumentParser()
 parser.add_argument('-input', dest='input', help='path to dicom directory', type=str)
 results = parser.parse_args()
 loadDicom(results.input)
-
-for x in dicomList:
-    print(x)
