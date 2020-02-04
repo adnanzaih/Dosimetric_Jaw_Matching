@@ -21,20 +21,22 @@ def Analyze(input):
         seriesList.append(ds[0x0020,0x0011].value)
     combinePlots(imageList, seriesList, input, matrixSize)
 
+
 def combinePlots(imageList, seriesList, input, matrixSize):
     xjaws = np.ndarray([matrixSize,matrixSize])
-    yjaws = []
+    yjaws = np.zeros(shape=(4,matrixSize,matrixSize))
     rotjaws = np.ndarray([matrixSize,matrixSize])
+    i = 0
     for name in input:
         ds = pydicom.read_file(name)
-
         if ds[0x0020,0x0011].value == np.asarray(seriesList).min():
             # print("X-Jaws is ", y)
             xjaws += ds.pixel_array
         elif ds[0x0020,0x0011].value == np.asarray(seriesList).max():
             #print("Y-Jaws is ", ds[0x0020,0x0013].value)
             imageList.append(ds[0x0020, 0x0013].value)
-            yjaws.append(ds.pixel_array)
+            yjaws[i] = np.array(ds.pixel_array)
+            i += 1
         else:
             # print("Rotation Jaw is ", y)
             rotjaws += ds.pixel_array
@@ -44,7 +46,7 @@ def combinePlots(imageList, seriesList, input, matrixSize):
 
 
 def combineYJaws(yjaws, imageList):
-    return yjaws[0] + yjaws[1] + yjaws[2] + yjaws[3]
+    return yjaws[0]+yjaws[1]+yjaws[2]+yjaws[3]
 
 
 def plotPlots(a,b, c):
