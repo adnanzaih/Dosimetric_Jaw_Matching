@@ -19,28 +19,35 @@ def Analyze(input):
         ds = pydicom.read_file(x)
         matrixSize = ds[0x0028,0x0010].value
         seriesList.append(ds[0x0020,0x0011].value)
-    combinePlots(seriesList, input, matrixSize)
+    combinePlots(imageList, seriesList, input, matrixSize)
 
-def combinePlots(seriesList, input, matrixSize):
+def combinePlots(imageList, seriesList, input, matrixSize):
     xjaws = np.ndarray([matrixSize,matrixSize])
-    yjaws = np.ndarray([matrixSize,matrixSize])
+    yjaws = []
     rotjaws = np.ndarray([matrixSize,matrixSize])
     for name in input:
         ds = pydicom.read_file(name)
+
         if ds[0x0020,0x0011].value == np.asarray(seriesList).min():
             # print("X-Jaws is ", y)
             xjaws += ds.pixel_array
         elif ds[0x0020,0x0011].value == np.asarray(seriesList).max():
-            # print("Y-Jaws is ", y)
-            yjaws += ds.pixel_array
+            #print("Y-Jaws is ", ds[0x0020,0x0013].value)
+            imageList.append(ds[0x0020, 0x0013].value)
+            yjaws.append(ds.pixel_array)
         else:
             # print("Rotation Jaw is ", y)
             rotjaws += ds.pixel_array
+    plotPlots(xjaws, combineYJaws(yjaws, imageList), rotjaws)
+    print(imageList)
 
-    plotPlots(xjaws, yjaws, rotjaws)
 
 
-def plotPlots(a, b, c):
+def combineYJaws(yjaws, imageList):
+    return yjaws[0] + yjaws[1] + yjaws[2] + yjaws[3]
+
+
+def plotPlots(a,b, c):
     a8bit = rescale(a)
     b8bit = rescale(b)
     c8bit = rescale(c)
@@ -68,6 +75,7 @@ def rescale(input):
 
 dicomList = []
 seriesList = []
+imageList = []
 parser = argparse.ArgumentParser()
 parser.add_argument('-input', dest='input', help='path to dicom directory', type=str)
 results = parser.parse_args()
