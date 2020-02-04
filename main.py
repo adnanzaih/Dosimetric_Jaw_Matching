@@ -26,23 +26,48 @@ def combinePlots(imageList, seriesList, input, matrixSize):
     xjaws = np.ndarray([matrixSize,matrixSize])
     yjaws = np.zeros(shape=(4,matrixSize,matrixSize))
     rotjaws = np.ndarray([matrixSize,matrixSize])
-    i = 0
-    for name in input:
-        ds = pydicom.read_file(name)
-        normalizedArray = ds.pixel_array/(np.max(ds.pixel_array))
-        if ds[0x0020,0x0011].value == np.asarray(seriesList).min():
-            # print("X-Jaws is ", y)
-            xjaws += normalizedArray
-        elif ds[0x0020,0x0011].value == np.asarray(seriesList).max():
-            #print("Y-Jaws is ", ds[0x0020,0x0013].value)
-            imageList.append(ds[0x0020, 0x0013].value)
-            yjaws[i] = np.array(normalizedArray)
-            i += 1
-        else:
-            # print("Rotation Jaw is ", y)
-            rotjaws += normalizedArray
-    plotPlots(xjaws, combineYJaws(yjaws, imageList), rotjaws)
-    print(imageList)
+
+    if pydicom.read_file(input[0])[0x0010,0x0020].value == "ZPHYSICS_MONTHLY_U1":
+        print("These images are from U1's patient")
+        i = 0
+        for name in input:
+            ds = pydicom.read_file(name)
+            normalizedArray = ds.pixel_array / (np.max(ds.pixel_array))
+            if ds[0x0020, 0x0011].value == np.asarray(seriesList).min():
+                if ds[0x0020, 0x0013].value == 1 or ds[0x0020, 0x0013].value == 2:
+                # print("X-Jaws is ", y)
+                    xjaws += normalizedArray
+                else:
+                    rotjaws += normalizedArray
+            elif ds[0x0020, 0x0011].value == np.asarray(seriesList).max():
+                # print("Y-Jaws is ", ds[0x0020,0x0013].value)
+                imageList.append(ds[0x0020, 0x0013].value)
+                yjaws[i] = np.array(normalizedArray)
+                i += 1
+            else:
+                # print("Rotation Jaw is ", y)
+                print("Need to fix the If-statments for U1's patient")
+        plotPlots(xjaws,rotjaws,combineYJaws(yjaws, imageList))
+        print(imageList)
+
+    else:
+        i = 0
+        for name in input:
+            ds = pydicom.read_file(name)
+            normalizedArray = ds.pixel_array / (np.max(ds.pixel_array))
+            if ds[0x0020, 0x0011].value == np.asarray(seriesList).min():
+                # print("X-Jaws is ", y)
+                xjaws += normalizedArray
+            elif ds[0x0020, 0x0011].value == np.asarray(seriesList).max():
+                # print("Y-Jaws is ", ds[0x0020,0x0013].value)
+                imageList.append(ds[0x0020, 0x0013].value)
+                yjaws[i] = np.array(normalizedArray)
+                i += 1
+            else:
+                # print("Rotation Jaw is ", y)
+                rotjaws += normalizedArray
+        plotPlots(xjaws, combineYJaws(yjaws, imageList), rotjaws)
+        print(imageList)
 
 
 
