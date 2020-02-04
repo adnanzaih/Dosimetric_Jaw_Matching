@@ -29,27 +29,28 @@ def combinePlots(imageList, seriesList, input, matrixSize):
     i = 0
     for name in input:
         ds = pydicom.read_file(name)
+        normalizedArray = ds.pixel_array/(np.max(ds.pixel_array))
         if ds[0x0020,0x0011].value == np.asarray(seriesList).min():
             # print("X-Jaws is ", y)
-            xjaws += ds.pixel_array
+            xjaws += normalizedArray
         elif ds[0x0020,0x0011].value == np.asarray(seriesList).max():
             #print("Y-Jaws is ", ds[0x0020,0x0013].value)
             imageList.append(ds[0x0020, 0x0013].value)
-            yjaws[i] = np.array(ds.pixel_array)
+            yjaws[i] = np.array(normalizedArray)
             i += 1
         else:
             # print("Rotation Jaw is ", y)
-            rotjaws += ds.pixel_array
+            rotjaws += normalizedArray
     plotPlots(xjaws, combineYJaws(yjaws, imageList), rotjaws)
     print(imageList)
 
 
 
 def combineYJaws(yjaws, imageList):
-    return yjaws[0]+yjaws[1]+yjaws[2]+yjaws[3]
+    return sum(yjaws)
 
 
-def plotPlots(a,b, c):
+def plotPlots(a,b,c):
     a8bit = rescale(a)
     b8bit = rescale(b)
     c8bit = rescale(c)
