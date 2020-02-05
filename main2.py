@@ -20,7 +20,6 @@ def sortJaw(input, matrixSize):
     rotJawArray = np.zeros(shape=(4,matrixSize[0],matrixSize[1]))
     i = 0
     k = 0
-    z = 0
     for name in dicomList:
         ds_jaw = pydicom.read_file(name)
         ret, thresh = cv2.threshold(rescale(ds_jaw.pixel_array), 126, 255, 0)
@@ -69,11 +68,11 @@ def rescale(input):
 
 def plotPlots(a,b,c):
     fig, axs = plt.subplots(1, 3)
-    axs[0].imshow((a[0]+np.roll(a[1],30,axis=1)),cmap='twilight')
+    axs[0].imshow((a[0]+np.roll(a[1],0,axis=1)),cmap='twilight')
     axs[0].set_title('X-Jaws')
-    axs[1].imshow((np.roll(b[0],10,axis=0)+b[1]+b[2]+b[3]),cmap='twilight')
+    axs[1].imshow((np.roll(b[0],0,axis=0)+b[1]+b[2]+b[3]),cmap='twilight')
     axs[1].set_title('Y-Jaws')
-    axs[2].imshow((c[0]+c[1]+c[2]+np.roll(c[3],30,axis=0)),cmap='twilight')
+    axs[2].imshow((c[0]+c[1]+c[2]+np.roll(c[3],0,axis=0)),cmap='twilight')
     axs[2].set_title('Rotation')
     plt.show()
 
