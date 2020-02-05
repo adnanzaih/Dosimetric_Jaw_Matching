@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pydicom
 import matplotlib.pyplot as plt
-
+import cv2
 
 
 def loadDicom(input):
@@ -11,56 +11,31 @@ def loadDicom(input):
         for filename in fileList:
             if ".dcm" in filename.lower():  # check whether the file's DICOM
                 dicomList.append(os.path.join(dirName,filename))
-        Analyze(dicomList)
+        sortJaw(dicomList, int(np.shape(pydicom.read_file(dicomList[0]).pixel_array)[0]))
 
 
-def Analyze(input):
-    for x in input:
-        ds = pydicom.read_file(x)
-        matrixSize = ds[0x0028,0x0010].value
-        seriesList.append(ds[0x0020,0x0011].value)
-    combinePlots(imageList, seriesList, input, matrixSize)
-
-
-def combinePlots(imageList, seriesList, input, matrixSize):
-    xjaws = np.ndarray([matrixSize,matrixSize])
-    yjaws = np.zeros(shape=(4,matrixSize,matrixSize))
-    rotjaws = np.ndarray([matrixSize,matrixSize])
-    i = 0
-    for name in input:
-        ds = pydicom.read_file(name)
-        if ds[0x0020,0x0011].value == np.asarray(seriesList).min():
-            # print("X-Jaws is ", y)
-            xjaws += ds.pixel_array
-        elif ds[0x0020,0x0011].value == np.asarray(seriesList).max():
-            #print("Y-Jaws is ", ds[0x0020,0x0013].value)
-            imageList.append(ds[0x0020, 0x0013].value)
-            yjaws[i] = np.array(ds.pixel_array)
-            i += 1
+def sortJaw(input, matrixSize):
+    xJawArray = np.ndarray([matrixSize,matrixSize])
+    yJawArray = np.ndarray([matrixSize,matrixSize])
+    rotJawArray = np.ndarray([matrixSize,matrixSize])
+    for name in dicomList:
+        ds_jaw = pydicom.read_file(name)
+        ret, thresh = cv2.threshold(rescale(ds_jaw.pixel_array), 126, 255, 0)
+        contours, hierarchy = cv2.findContours(thresh, 1, 2)
+        cnt = contours[0]
+        x, y, w, h = cv2.boundingRect(cnt)
+        print(w, h)
+        if w * 0.5 > h:
+            #print("Y-jaw")
+            yJawArray += ds_jaw.pixel_array
+        elif h * 0.5 > w:
+            #print("X-Jaw")
+            xJawArray += ds_jaw.pixel_array
         else:
-            # print("Rotation Jaw is ", y)
-            rotjaws += ds.pixel_array
-    plotPlots(xjaws, combineYJaws(yjaws, imageList), rotjaws)
-    print(imageList)
+            #print("Rotation Jaw")
+            rotJawArray += ds_jaw.pixel_array
 
-
-
-def combineYJaws(yjaws, imageList):
-    return yjaws[0]+yjaws[1]+yjaws[2]+yjaws[3]
-
-
-def plotPlots(a,b, c):
-    a8bit = rescale(a)
-    b8bit = rescale(b)
-    c8bit = rescale(c)
-    fig, axs = plt.subplots(1, 3)
-    axs[0].imshow(a8bit)
-    axs[0].set_title('X-Jaws')
-    axs[1].imshow(b8bit)
-    axs[1].set_title('Y-Jaws')
-    axs[2].imshow(c8bit)
-    axs[2].set_title('Rotation')
-    plt.show()
+    plotPlots(xJawArray, yJawArray, rotJawArray)
 
 
 def rescale(input):
@@ -75,9 +50,18 @@ def rescale(input):
     return o8
 
 
+def plotPlots(a,b,c):
+    fig, axs = plt.subplots(1, 3)
+    axs[0].imshow(a)
+    axs[0].set_title('X-Jaws')
+    axs[1].imshow(b)
+    axs[1].set_title('Y-Jaws')
+    axs[2].imshow(c)
+    axs[2].set_title('Rotation')
+    plt.show()
+
+
 dicomList = []
-seriesList = []
-imageList = []
 parser = argparse.ArgumentParser()
 parser.add_argument('-input', dest='input', help='path to dicom directory', type=str)
 results = parser.parse_args()
