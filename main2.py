@@ -14,7 +14,7 @@ def loadDicom(input):
         sortJaw(dicomList, [int(np.shape(pydicom.read_file(dicomList[0]).pixel_array)[0]),int(np.shape(pydicom.read_file(dicomList[0]).pixel_array)[1])])
 
 
-def sortJaw(input, matrixSize):
+def sortJaw(dicomList, matrixSize):
     xJawArray = np.ndarray([matrixSize[0],matrixSize[1]])
     yJawArray = np.ndarray([matrixSize[0],matrixSize[1]])
     rotJawArray = np.ndarray([matrixSize[0],matrixSize[1]])
@@ -27,13 +27,13 @@ def sortJaw(input, matrixSize):
         #print(w, h)
         if w * 0.5 > h:
             #print("Y-jaw")
-            yJawArray += ds_jaw.pixel_array
+            yJawArray += rescale(ds_jaw.pixel_array)
         elif h * 0.5 > w:
             #print("X-Jaw")
-            xJawArray += ds_jaw.pixel_array
+            xJawArray += rescale(ds_jaw.pixel_array)
         else:
             #print("Rotation Jaw")
-            rotJawArray += ds_jaw.pixel_array
+            rotJawArray += rescale(ds_jaw.pixel_array)
 
     plotPlots(xJawArray, yJawArray, rotJawArray)
 
@@ -52,11 +52,11 @@ def rescale(input):
 
 def plotPlots(a,b,c):
     fig, axs = plt.subplots(1, 3)
-    axs[0].imshow(a)
+    axs[0].imshow(a,cmap='twilight')
     axs[0].set_title('X-Jaws')
-    axs[1].imshow(b)
+    axs[1].imshow(b,cmap='twilight')
     axs[1].set_title('Y-Jaws')
-    axs[2].imshow(c)
+    axs[2].imshow(c,cmap='twilight')
     axs[2].set_title('Rotation')
     plt.show()
 
