@@ -3,7 +3,8 @@ import pydicom
 import numpy as np
 
 
-file = "/Users/adnanhafeez/Documents/TBCC Work/PicketFenceProblem/RI.ZPHYSICS_MONTHLY_U9.MV_90_0a1_0002.dcm"
+file = "C:/Users/adnanhafeez/Documents/DICOMs/RI.ZPHYSICS_MONTHLY_U9.MV_90_0a1.dcm"
+
 dicom = pydicom.read_file(file)
 
 
@@ -26,13 +27,17 @@ def sortJaw(volume):
     M = cv2.moments(cnt)
     x, y, w, h = cv2.boundingRect(cnt)
     img = cv2.rectangle(thresh, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    cv2.circle(img, (x, y), 5, (78, 55, -128), 1)
     print(w,h)
+    print(x,y)
     if w*0.5 > h:
         print("Y-jaw")
     elif h*0.5 > w:
         print("X-Jaw")
     else:
         print("Rotation Jaw")
+    cv2.imshow("Jaw", img)
+    cv2.waitKey()
 
 
 sortJaw(rescale(dicom.pixel_array))

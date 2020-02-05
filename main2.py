@@ -15,9 +15,12 @@ def loadDicom(input):
 
 
 def sortJaw(input, matrixSize):
-    xJawArray = np.ndarray([matrixSize[0],matrixSize[1]])
-    yJawArray = np.ndarray([matrixSize[0],matrixSize[1]])
-    rotJawArray = np.ndarray([matrixSize[0],matrixSize[1]])
+    xJawArray = np.zeros(shape=(2,matrixSize[0],matrixSize[1]))
+    yJawArray = np.zeros(shape=(4,matrixSize[0],matrixSize[1]))
+    rotJawArray = np.zeros(shape=(4,matrixSize[0],matrixSize[1]))
+    i = 0
+    k = 0
+    z = 0
     for name in dicomList:
         ds_jaw = pydicom.read_file(name)
         ret, thresh = cv2.threshold(rescale(ds_jaw.pixel_array), 126, 255, 0)
@@ -27,13 +30,27 @@ def sortJaw(input, matrixSize):
         #print(w, h)
         if w * 0.5 > h:
             #print("Y-jaw")
-            yJawArray += ds_jaw.pixel_array
+            yJawArray[i] = np.array(rescale(ds_jaw.pixel_array))
+            i += 1
         elif h * 0.5 > w:
             #print("X-Jaw")
-            xJawArray += ds_jaw.pixel_array
+            xJawArray[k] = np.array(rescale(ds_jaw.pixel_array))
+            k += 1
         else:
             #print("Rotation Jaw")
-            rotJawArray += ds_jaw.pixel_array
+            #further_sort_rot(ds_jaw)
+            if x < 400 and y < 300:
+                rotJawArray[0] = np.array(rescale(ds_jaw.pixel_array))
+                print("rot 1",x,y)
+            elif x > 400 and y < 300:
+                rotJawArray[1] = np.array(rescale(ds_jaw.pixel_array))
+                print("rot 2", x,y)
+            elif x < 400 and y > 300:
+                rotJawArray[2] = np.array(rescale(ds_jaw.pixel_array))
+                print("rot 3", x, y)
+            elif x > 400 and y > 300:
+                rotJawArray[3] = np.array(rescale(ds_jaw.pixel_array))
+                print("rot 4", x, y)
 
     plotPlots(xJawArray, yJawArray, rotJawArray)
 
@@ -52,16 +69,17 @@ def rescale(input):
 
 def plotPlots(a,b,c):
     fig, axs = plt.subplots(1, 3)
-    axs[0].imshow(a)
+    axs[0].imshow((a[0]+np.roll(a[1],-1,axis=1)))
     axs[0].set_title('X-Jaws')
-    axs[1].imshow(b)
+    axs[1].imshow((b[0]+b[1]+b[2]+b[3]))
     axs[1].set_title('Y-Jaws')
-    axs[2].imshow(c)
+    axs[2].imshow((c[0]+c[1]+c[2]+c[3]))
     axs[2].set_title('Rotation')
     plt.show()
 
 
 dicomList = []
+imageList = []
 parser = argparse.ArgumentParser()
 parser.add_argument('-input', dest='input', help='path to dicom directory', type=str)
 results = parser.parse_args()
