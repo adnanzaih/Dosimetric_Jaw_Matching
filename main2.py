@@ -11,20 +11,20 @@ def loadDicom(input):
         for filename in fileList:
             if ".dcm" in filename.lower():  # check whether the file's DICOM
                 dicomList.append(os.path.join(dirName,filename))
-        sortJaw(dicomList, int(np.shape(pydicom.read_file(dicomList[0]).pixel_array)[0]))
+        sortJaw(dicomList, [int(np.shape(pydicom.read_file(dicomList[0]).pixel_array)[0]),int(np.shape(pydicom.read_file(dicomList[0]).pixel_array)[1])])
 
 
 def sortJaw(input, matrixSize):
-    xJawArray = np.ndarray([matrixSize,matrixSize])
-    yJawArray = np.ndarray([matrixSize,matrixSize])
-    rotJawArray = np.ndarray([matrixSize,matrixSize])
+    xJawArray = np.ndarray([matrixSize[0],matrixSize[1]])
+    yJawArray = np.ndarray([matrixSize[0],matrixSize[1]])
+    rotJawArray = np.ndarray([matrixSize[0],matrixSize[1]])
     for name in dicomList:
         ds_jaw = pydicom.read_file(name)
         ret, thresh = cv2.threshold(rescale(ds_jaw.pixel_array), 126, 255, 0)
         contours, hierarchy = cv2.findContours(thresh, 1, 2)
         cnt = contours[0]
         x, y, w, h = cv2.boundingRect(cnt)
-        print(w, h)
+        #print(w, h)
         if w * 0.5 > h:
             #print("Y-jaw")
             yJawArray += ds_jaw.pixel_array
